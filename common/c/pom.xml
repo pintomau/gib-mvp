@@ -12,11 +12,4 @@
 
     <artifactId>c</artifactId>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.pintomau</groupId>
-            <artifactId>c</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-    </dependencies>
 </project>
