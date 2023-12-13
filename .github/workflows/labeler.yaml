@@ -11,3 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/labeler@v5
+        with:
+          # remove labels if changes are no longer impacting the previous files
+          sync-labels: true
