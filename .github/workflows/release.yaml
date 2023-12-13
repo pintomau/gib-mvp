@@ -33,7 +33,6 @@ jobs:
           # language=json
           configurationJson: |
             {
-              "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
               "categories": [
                 {
                   "title": "## 💬 Other",
@@ -41,13 +40,15 @@ jobs:
                 },
                 {
                   "title": "## 📦 Dependencies",
-                  "labels": ["dependencies"]
+                  "labels": ["c", "d"]
                 }
               ]
             }
 
       - name: Print
         shell: bash
+        env:
+          CHANGELOG: ${{ steps.github-releases.outputs.changelog }}
         # language=bash
         run: |
-          echo "${{ steps.github-release.outputs.changelog }}"
+          echo "$CHANGELOG"
