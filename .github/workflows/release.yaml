@@ -22,6 +22,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+      - uses: actions/checkout@v3
+        with:
+          # We want the full repository because GIB needs it and Sonarqube works best with it
+          fetch-depth: 0
+
+      - name: Calculate GIB
+        id: calculate-gib
+        shell: bash
+        # language=bash
+        run: |
+          mvn -Dincremental -Dgib.untracked=false -Dgib.uncommitted=false -Dgib.dsph \
+            -Dgib.referenceBranch=${{ inputs.fromTag }} -Dgib.baseBranch=${{ inputs.toTag }}\
+            -Dgib.logImpactedTo=gib-impacted.log \
+            -pl ${{ inputs.module }} -am validate
+          
+          commons=""
+          for i in $(cat gib-impacted.log)
+          do
+            if [[ $i == common* ]]
+            then
+              label=$(echo "$i" | cut -d'/' -f 2)
+              commons+="\"$label\","
+            fi
+          done
+          
+          # remove last char
+          if [ ! -z "$commons" ]
+          then
+            commons=${commons::-1}
+          fi
+          echo "commons: $commons"
+          echo "commons=$commons" >> $GITHUB_OUTPUT
+
       - name: Build changelog
         id: github-releases
         env:
@@ -42,7 +75,7 @@ jobs:
                 },
                 {
                   "title": "## 📦 Dependencies",
-                  "labels": ["c", "d"]
+                  "labels": [${{ steps.calculate-gib.outputs.commons }}]
                 }
               ]
             }
@@ -54,3 +87,4 @@ jobs:
         # language=bash
         run: |
           echo "$CHANGELOG"
+          echo "$CHANGELOG" >> $GITHUB_STEP_SUMMARY
