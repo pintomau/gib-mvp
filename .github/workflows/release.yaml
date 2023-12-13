@@ -70,6 +70,16 @@ jobs:
               "pr_template": "- (##{{NUMBER}}): #{{TITLE}}",
               "categories": [
                 {
+                  "title": "## 🚀 Features",
+                  "labels": ["${{ inputs.module }}"],
+                  "exclude_labels": ["fix"]
+                },
+                {
+                  "title": "## 🐛 Fixes",
+                  "labels": ["${{ inputs.module }}", "fix"],
+                  "exhaustive": true
+                },
+                {
                   "title": "## 💬 Other",
                   "labels": ["other"]
                 },
