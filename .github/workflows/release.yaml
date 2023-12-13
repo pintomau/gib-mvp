@@ -67,7 +67,7 @@ jobs:
           configurationJson: |
             {
               "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
-              "pr_template": "- (##{{NUMBER}}): #{{TITLE}}",
+              "pr_template": "- ##{{NUMBER}}: #{{TITLE}}",
               "categories": [
                 {
                   "title": "## 🚀 Features",
@@ -84,7 +84,7 @@ jobs:
                   "labels": ["other"]
                 },
                 {
-                  "title": "## 📦 Dependencies",
+                  "title": "## 📦 Commons",
                   "labels": [${{ steps.calculate-gib.outputs.commons }}]
                 }
               ]
