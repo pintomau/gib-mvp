@@ -14,6 +14,13 @@ d:
   - changed-files:
       - any-glob-to-any-file: 'common/d/**'
 
+# Add 'feature' label to any PR where the head branch name starts with `feature` or has a `feature` section in the name
+feature:
+  - head-branch: ['^feature', 'feature']
+
+fix:
+  - head-branch: ['^fix', 'fix', '^hotfix', 'hotfix']
+
 # Add 'root' label to any root file changes
 # Quotation marks are required for the leading asterisk
 #root:
