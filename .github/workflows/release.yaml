@@ -10,22 +10,73 @@ on:
           - a
           - b
 
-      fromTag:
-        description: From tag
+      fromReference:
+        description: |
+          If not set, we'll try to find the previous tag for the provided service, with the tag pattern
+          "*\+{MODULE}\.*". If set, we'll use the commit/tag/branch to calculate diffs, changelogs, etc...
 
-      toTag:
-        description: To tag
+      toReference:
+        description: Target commit/branch/tag to create new tag, calculate diffs, changelogs...
         required: true
 
 jobs:
+
+  create-tag:
+    name: Create Tag
+    runs-on: ubuntu-latest
+    outputs:
+      previous_tag: ${{ steps.previous-tag.outputs.previous_tag }}
+      tag: ${{ steps.create-tag.outputs.tag }}
+    steps:
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.toReference }}
+          fetch-depth: 0
+          filter: tree:0
+
+      - name: Calculate previous tag
+        id: previous-tag
+        env:
+          FROM_REFERENCE: ${{ inputs.fromReference }}
+        shell: bash
+        # language=bash
+        run: |
+          if [ ! -z "$FROM_REFERENCE" ]
+          then
+            echo "previous_tag=$FROM_REFERENCE" >> $GITHUB_OUTPUT
+            return 
+          fi
+          
+          git tag -l --sort=-version:refname
+          previous_tag=$(git tag -l --sort=-version:refname "*\+${{ inputs.module }}\.*" | head -1)
+          echo "previous_tag: $previous_tag"
+          echo "previous_tag=$previous_tag" >> $GITHUB_OUTPUT
+
+      - name: Create and push tag
+        id: create-tag
+        shell: bash
+        # language=bash
+        run: |
+          tag="$(date +%G.%V).$(git rev-list --count HEAD --since="$(date "+%b 1 %G")")+${{ inputs.module }}.$(git rev-parse --short HEAD)"
+          git tag $tag
+          git push origin $tag
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+
   release:
+    name: Release
+    env:
+      PREVIOUS_TAG: ${{ needs.create-tag.outputs.previous_tag }}
+      TAG: ${{ needs.create-tag.outputs.tag }}
+    needs:
+      - create-tag
     runs-on: ubuntu-latest
     steps:
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          # We want the full repository because GIB needs it and Sonarqube works best with it
-          fetch-depth: 0
+          ref: ${{ env.TAG }}
+          fetch-depth: 1000
 
       - name: Calculate GIB
         id: calculate-gib
@@ -33,7 +84,7 @@ jobs:
         # language=bash
         run: |
           mvn -Dincremental -Dgib.untracked=false -Dgib.uncommitted=false -Dgib.dsph \
-            -Dgib.referenceBranch=${{ inputs.fromTag }} -Dgib.baseBranch=${{ inputs.toTag }}\
+            -Dgib.referenceBranch=${{ env.PREVIOUS_TAG }} -Dgib.baseBranch=${{ env.TAG }} \
             -Dgib.logImpactedTo=gib-impacted.log \
             -pl ${{ inputs.module }} -am validate
           
@@ -56,13 +107,13 @@ jobs:
           echo "commons=$commons" >> $GITHUB_OUTPUT
 
       - name: Build changelog
-        id: github-releases
+        id: github-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: mikepenz/release-changelog-builder-action@v3
         with:
-          fromTag: ${{ inputs.fromTag }}
-          toTag: ${{ inputs.toTag }}
+          fromTag: ${{ env.PREVIOUS_TAG }}
+          toTag: ${{ env.TAG }}
           # language=json
           configurationJson: |
             {
@@ -93,8 +144,14 @@ jobs:
       - name: Print
         shell: bash
         env:
-          CHANGELOG: ${{ steps.github-releases.outputs.changelog }}
+          CHANGELOG: ${{ steps.github-release.outputs.changelog }}
         # language=bash
         run: |
           echo "$CHANGELOG"
           echo "$CHANGELOG" >> $GITHUB_STEP_SUMMARY
+
+      - name: Create Release
+        uses: mikepenz/action-gh-release@v0.4.1 #softprops/action-gh-release
+        with:
+          body: ${{ steps.github-release.outputs.changelog }}
+          tag_name: ${{ needs.create-tag.outputs.tag }}
