@@ -33,6 +33,7 @@ jobs:
         with:
           ref: ${{ inputs.toReference }}
           fetch-depth: 0
+          # https://github.blog/2020-12-21-get-up-to-speed-with-partial-clone-and-shallow-clone/
           filter: tree:0
 
       - name: Calculate previous tag
@@ -50,7 +51,7 @@ jobs:
           
           git tag -l --sort=-version:refname
           previous_tag=$(git tag -l --sort=-version:refname "*\+${{ inputs.module }}\.*" | head -1)
-          echo "previous_tag: $previous_tag"
+          echo "Previous Tag: $previous_tag" >> $GITHUB_STEP_SUMMARY
           echo "previous_tag=$previous_tag" >> $GITHUB_OUTPUT
 
       - name: Create and push tag
@@ -61,6 +62,7 @@ jobs:
           tag="$(date +%G.%V).$(git rev-list --count HEAD --since="$(date "+%b 1 %G")")+${{ inputs.module }}.$(git rev-parse --short HEAD)"
           git tag $tag
           git push origin $tag
+          echo "Next Tag: $tag" >> $GITHUB_STEP_SUMMARY
           echo "tag=$tag" >> $GITHUB_OUTPUT
 
   release:
@@ -77,6 +79,7 @@ jobs:
         with:
           ref: ${{ env.TAG }}
           fetch-depth: 0
+          # https://github.blog/2020-12-21-get-up-to-speed-with-partial-clone-and-shallow-clone/
           filter: blob:none
 
       - name: Calculate GIB
@@ -107,7 +110,7 @@ jobs:
             # prevent any changes to appear in commons if nothing changed that would affect us
             commons='"just-no"'
           fi
-          echo "commons: $commons"
+          echo "Commons: $commons" >> $GITHUB_STEP_SUMMARY
           echo "commons=$commons" >> $GITHUB_OUTPUT
 
       - name: Build changelog
@@ -151,7 +154,6 @@ jobs:
           CHANGELOG: ${{ steps.github-release.outputs.changelog }}
         # language=bash
         run: |
-          echo "$CHANGELOG"
           echo "$CHANGELOG" >> $GITHUB_STEP_SUMMARY
 
       - name: Create Release
