@@ -59,7 +59,15 @@ jobs:
         shell: bash
         # language=bash
         run: |
-          tag="$(date +%G.%V).$(git rev-list --count HEAD --since="$(date "+%b 1 %G")")+${{ inputs.module }}.$(git rev-parse --short HEAD)"
+          # %V ISO Week starting on Monday
+          year_and_week=$(date +%G.%V)
+          # Commits AFTER Sunday (Starting on Monday)
+          commits_in_week=$(git rev-list --count HEAD --after="$(date -dlast-sunday "+%b %d %G")")
+          module="${{ inputs.module }}"
+          short_checksum=$(git rev-parse --short HEAD)
+
+          tag="$year_and_week.$commits_in_week+$module.$short_checksum"
+
           git tag $tag
           git push origin $tag
           echo "Next Tag: $tag" >> $GITHUB_STEP_SUMMARY
