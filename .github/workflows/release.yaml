@@ -99,10 +99,13 @@ jobs:
             fi
           done
           
-          # remove last char
           if [ ! -z "$commons" ]
           then
+            # remove last char
             commons=${commons::-1}
+          else
+            # prevent any changes to appear in commons if nothing changed that would affect us
+            commons='"just-no"'
           fi
           echo "commons: $commons"
           echo "commons=$commons" >> $GITHUB_OUTPUT
@@ -118,7 +121,7 @@ jobs:
           # language=json
           configurationJson: |
             {
-              "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
+              "template": "#{{CHANGELOG}}",
               "pr_template": "- ##{{NUMBER}}: #{{TITLE}}",
               "categories": [
                 {
@@ -132,12 +135,12 @@ jobs:
                   "exhaustive": true
                 },
                 {
-                  "title": "## 💬 Other",
-                  "labels": ["other"]
-                },
-                {
                   "title": "## 📦 Commons",
                   "labels": [${{ steps.calculate-gib.outputs.commons }}]
+                },
+                {
+                  "title": "## 💬 Other",
+                  "labels": ["other"]
                 }
               ]
             }
