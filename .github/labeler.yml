@@ -21,6 +21,10 @@ feature:
 fix:
   - head-branch: ['^fix', 'fix', '^hotfix', 'hotfix']
 
+other:
+  - changed-files:
+      - any-glob-to-any-file: '*'
+
 # Add 'root' label to any root file changes
 # Quotation marks are required for the leading asterisk
 #root:
