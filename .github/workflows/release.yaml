@@ -43,14 +43,14 @@ jobs:
         shell: bash
         # language=bash
         run: |
-          if [ ! -z "$FROM_REFERENCE" ]
+          if [ -z "$FROM_REFERENCE" ]
           then
-            echo "previous_tag=$FROM_REFERENCE" >> $GITHUB_OUTPUT
-            return 
+            git tag -l --sort=-version:refname
+            previous_tag=$(git tag -l --sort=-version:refname "*\+${{ inputs.module }}\.*" | head -1)  
+          else
+            previous_tag=$FROM_REFERENCE
           fi
-          
-          git tag -l --sort=-version:refname
-          previous_tag=$(git tag -l --sort=-version:refname "*\+${{ inputs.module }}\.*" | head -1)
+
           echo "Previous Tag: $previous_tag" >> $GITHUB_STEP_SUMMARY
           echo "previous_tag=$previous_tag" >> $GITHUB_OUTPUT
 
