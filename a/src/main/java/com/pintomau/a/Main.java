@@ -5,6 +5,7 @@ public class Main {
         System.out.println("Hello a.Main!");
         System.out.println("something else");
         System.out.println("a new feature");
+        System.out.println("a new feature");
         System.out.println("another feature");
     }
 }
